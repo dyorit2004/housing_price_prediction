@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>House Price Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eef;
+            padding: 40px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            width: 600px;
+            margin: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        h2 {
+            text-align: center;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0 12px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+            color: green;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>California House Price Predictor</h2>
+        <form id="predictForm">
+            <label>Longitude:</label>
+            <input type="number" step="any" name="longitude" required>
+            
+            <label>Latitude:</label>
+            <input type="number" step="any" name="latitude" required>
+
+            <label>Housing Median Age:</label>
+            <input type="number" name="housing_median_age" required>
+
+            <label>Total Rooms:</label>
+            <input type="number" name="total_rooms" required>
+
+            <label>Total Bedrooms:</label>
+            <input type="number" name="total_bedrooms" required>
+
+            <label>Population:</label>
+            <input type="number" name="population" required>
+
+            <label>Households:</label>
+            <input type="number" name="households" required>
+
+            <label>Median Income:</label>
+            <input type="number" step="any" name="median_income" required>
+
+            <label>Ocean Proximity:</label>
+            <select name="ocean_proximity">
+                <option value="<1H OCEAN"><1H OCEAN</option>
+                <option value="INLAND">INLAND</option>
+                <option value="ISLAND">ISLAND</option>
+                <option value="NEAR BAY">NEAR BAY</option>
+                <option value="NEAR OCEAN">NEAR OCEAN</option>
+            </select>
+
+            <button type="submit">Predict House Price</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById("predictForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = {
+                "longitude": parseFloat(formData.get("longitude")),
+                "latitude": parseFloat(formData.get("latitude")),
+                "housing_median_age": parseInt(formData.get("housing_median_age")),
+                "total_rooms": parseInt(formData.get("total_rooms")),
+                "total_bedrooms": parseInt(formData.get("total_bedrooms")),
+                "population": parseInt(formData.get("population")),
+                "households": parseInt(formData.get("households")),
+                "median_income": parseFloat(formData.get("median_income")),
+                "<1H OCEAN": 0,
+                "INLAND": 0,
+                "ISLAND": 0,
+                "NEAR BAY": 0,
+                "NEAR OCEAN": 0
+            };
+
+            // Set the correct one-hot encoding flag based on selection
+            const selected = formData.get("ocean_proximity");
+            data[selected] = 1;
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.predicted_median_house_value !== undefined) {
+                    document.getElementById("result").innerText =
+                        "Predicted House Price: $" + result.predicted_median_house_value.toLocaleString();
+                } else {
+                    document.getElementById("result").innerText = "Error: " + result.error;
+                }
+            } catch (error) {
+                document.getElementById("result").innerText = "Request failed.";
+            }
+        });
+    </script>
+</body>
+</html>
